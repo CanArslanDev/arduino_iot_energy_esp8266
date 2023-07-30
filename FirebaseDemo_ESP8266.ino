@@ -31,6 +31,7 @@
 #define WIFI_SSID "ultrasonik2"
 #define WIFI_PASSWORD "yakisiklican2909"
 #define UNIQUE_ID "00000000001"
+#define UNIQUE_ID2 "00000000002"
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
 void setup() {
@@ -48,76 +49,20 @@ timeClient.begin();
   Serial.println(WiFi.localIP());
   
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  
 }
 
-int n = 0;
-
 void loop() {
-  int sensorValue=analogRead(A0);
-  float voltage=(sensorValue*1.405)*(5.0/1023.0);
-  // set voltage
-  Firebase.setFloat("devices/"+String(UNIQUE_ID)+"/voltage", voltage);
-  // handle error
-  if (Firebase.failed()) {
-      Serial.print("setting /voltage failed:");
-      Serial.println(Firebase.error());  
-      return;
-  }
-  Serial.println("pushed "+String(voltage));
-
-  // set date
-  String date=getTimeStampString();
-  Firebase.setString("devices/"+String(UNIQUE_ID)+"/date", date);
-  // handle error
-  if (Firebase.failed()) {
-      Serial.print("setting /date failed:");
-      Serial.println(Firebase.error());  
-      return;
-  }
-
- Serial.println("run");
-  for(int i=1;i<100;i++){
-     String timestamp=Firebase.getString("devices/"+String(UNIQUE_ID)+"/scene_"+i+"/timestamp");
- if(timestamp!=""){
-     bool enable=Firebase.getBool("devices/"+String(UNIQUE_ID)+"/scene_"+i+"/enable");
-     Serial.print("enable= ");
-     Serial.println(enable);
-  if(enable==true){
-    int CdayValue=getDayInt();
-  int ChourValue=getHourInt()+3;
-  int CminuteValue=getMinuteInt();
-  int dayValue=Firebase.getInt("devices/"+String(UNIQUE_ID)+"/scene_"+i+"/day");
-  int hourValue=Firebase.getInt("devices/"+String(UNIQUE_ID)+"/scene_"+i+"/hour");
-  int minuteValue=Firebase.getInt("devices/"+String(UNIQUE_ID)+"/scene_"+i+"/minute");
-     Serial.print("day ");
-     Serial.print(CdayValue);
-     Serial.print(" = ");
-     Serial.println(dayValue);
-     Serial.print("hour ");
-     Serial.print(ChourValue);
-     Serial.print(" = ");
-     Serial.println(hourValue);
-     Serial.print("minute ");
-     Serial.print(CminuteValue);
-     Serial.print(" = ");
-     Serial.println(minuteValue);
-  if(CdayValue==dayValue && ChourValue==hourValue && CminuteValue==minuteValue){
-    
-  int plan=Firebase.getInt("devices/"+String(UNIQUE_ID)+"/scene_"+i+"/plan");
-  if(plan==0){
-    Firebase.setBool("devices/"+String(UNIQUE_ID)+"/power", true);
-  } else if(plan==1){
-    Firebase.setBool("devices/"+String(UNIQUE_ID)+"/power", false);
-  }
-    }
-  }
- } else {
-  
- Serial.println("break");
-  break;
- }
-  }
+ pinMode(D5,INPUT);
+ pinMode(D0,OUTPUT);
   delay(5000);
+  Serial.println("----------------------------");
+  setValues(UNIQUE_ID);
+ pinMode(D0,INPUT);
+ pinMode(D5,OUTPUT);
+  delay(5000);
+  Serial.println("----------------------------");
+  setValues(UNIQUE_ID2);
   
  /* // update value
   Firebase.setFloat("number", 43.0);
@@ -171,6 +116,80 @@ void loop() {
   delay(1000);*/
 }
 
+void setValues(String id){
+    int sensorValue=analogRead(A0);
+  float voltage=(sensorValue*1.405)*(5.0/1023.0);
+  // set voltage
+  Firebase.setFloat("devices/"+id+"/voltage", voltage);
+  // handle error
+  if (Firebase.failed()) {
+      Serial.print("setting /voltage failed:");
+      Serial.println(Firebase.error());  
+      return;
+  }
+  Serial.println("pushed "+String(voltage));
+
+  // set date
+  String date=getTimeStampString();
+  Firebase.setString("devices/"+id+"/date", date);
+  // handle error
+  if (Firebase.failed()) {
+      Serial.print("setting /date failed:");
+      Serial.println(Firebase.error());  
+      return;
+  }
+
+ Serial.println("run");
+String test = Firebase.getString("devices/"+id+"/sceneList");
+String tempSceneName="";
+for(int i=0;i<test.length();i++){
+  if(test[i]!=','){
+    tempSceneName+=test[i];
+  } else {
+     String timestamp=Firebase.getString("devices/"+id+"/"+tempSceneName+"/timestamp");
+ if(timestamp!=""){
+     bool enable=Firebase.getBool("devices/"+id+"/"+tempSceneName+"/enable");
+     Serial.print("enable= ");
+     Serial.println(enable);
+  if(enable==true){
+    int CdayValue=getDayInt();
+  int ChourValue=getHourInt()+3;
+  int CminuteValue=getMinuteInt();
+  int dayValue=Firebase.getInt("devices/"+id+"/"+tempSceneName+"/day");
+  int hourValue=Firebase.getInt("devices/"+id+"/"+tempSceneName+"/hour");
+  int minuteValue=Firebase.getInt("devices/"+id+"/"+tempSceneName+"/minute");
+     Serial.print("day ");
+     Serial.print(CdayValue);
+     Serial.print(" = ");
+     Serial.println(dayValue);
+     Serial.print("hour ");
+     Serial.print(ChourValue);
+     Serial.print(" = ");
+     Serial.println(hourValue);
+     Serial.print("minute ");
+     Serial.print(CminuteValue);
+     Serial.print(" = ");
+     Serial.println(minuteValue);
+  if(CdayValue==dayValue && ChourValue==hourValue && CminuteValue==minuteValue){
+    
+  int plan=Firebase.getInt("devices/"+id+"/"+tempSceneName+"/plan");
+  if(plan==0){
+    Firebase.setBool("devices/"+id+"/power", true);
+  } else if(plan==1){
+    Firebase.setBool("devices/"+id+"/power", false);
+  }
+    }
+  }
+ } else {
+  
+ Serial.println("break");
+ }
+ tempSceneName="";
+  }
+}
+
+}
+
 String getTimeStampString() {
   timeClient.update();
    time_t rawtime = timeClient.getEpochTime();
@@ -187,7 +206,7 @@ String getTimeStampString() {
    String dayStr = day < 10 ? "0" + String(day) : String(day);
 
    uint8_t hours = ti->tm_hour;
-   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
+   String hoursStr = hours < 10 ? "0" + String(hours+3) : String(hours+3);
 
    uint8_t minutes = ti->tm_min;
    String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
