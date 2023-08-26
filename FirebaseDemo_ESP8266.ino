@@ -30,10 +30,16 @@
 #define FIREBASE_AUTH "OAW3t0pHNbNlBPXbPoLC6CUAdp8je3Yz971cbEwX"
 #define WIFI_SSID "ultrasonik2"
 #define WIFI_PASSWORD "yakisiklican2909"
+#define MODULE_ID "00000000001"
 #define UNIQUE_ID "00000000001"
 #define UNIQUE_ID2 "00000000002"
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
+int powerPins[] = {
+D0,
+D5,
+}; 
+int powerPinsCount=2;
 void setup() {
   Serial.begin(9600);
 timeClient.begin();
@@ -53,16 +59,11 @@ timeClient.begin();
 }
 
 void loop() {
- pinMode(D5,INPUT);
- pinMode(D0,OUTPUT);
+  Serial.println("----------------------------");
+  setValues(UNIQUE_ID,0,D7);
   delay(5000);
   Serial.println("----------------------------");
-  setValues(UNIQUE_ID);
- pinMode(D0,INPUT);
- pinMode(D5,OUTPUT);
-  delay(5000);
-  Serial.println("----------------------------");
-  setValues(UNIQUE_ID2);
+  setValues(UNIQUE_ID2,1,D8);
   
  /* // update value
   Firebase.setFloat("number", 43.0);
@@ -116,7 +117,48 @@ void loop() {
   delay(1000);*/
 }
 
-void setValues(String id){
+void setValues(String id, int index, int powerPin){
+int pin=D0;
+for(int i=0;i<powerPinsCount;i++){
+  if(i==index){
+    pin=powerPins[i];
+  } else {
+    Serial.print("INDEX INPUT");
+    Serial.println(powerPins[i]);
+ pinMode(powerPins[i],INPUT);
+  }
+} 
+
+    Serial.print("PIN OUTPUT");
+    Serial.println(pin
+    );
+
+  // get power
+ bool power= Firebase.getBool("devices/"+id+"/power");
+  // get charging
+  bool charging=Firebase.getBool("devices/"+id+"/charging");
+  Serial.println(power);
+  Serial.println(charging);
+    if(power==true){
+          if(charging==true){
+      
+ pinMode(pin,OUTPUT);
+    } else {
+      
+ pinMode(pin,INPUT);
+    }
+ pinMode(powerPin,OUTPUT);
+    } else {
+      
+ pinMode(pin,INPUT);
+ pinMode(powerPin,INPUT);
+    }
+
+    
+
+  
+  // set module id
+  Firebase.setString("devices/"+id+"/module_id", MODULE_ID);
     int sensorValue=analogRead(A0);
   float voltage=(sensorValue*1.405)*(5.0/1023.0);
   // set voltage
