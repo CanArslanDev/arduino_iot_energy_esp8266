@@ -26,10 +26,10 @@
 
 
 // Set these to run example.
-#define FIREBASE_HOST "energy-e67ed-default-rtdb.firebaseio.com"
-#define FIREBASE_AUTH "OAW3t0pHNbNlBPXbPoLC6CUAdp8je3Yz971cbEwX"
-#define WIFI_SSID "ultrasonik2"
-#define WIFI_PASSWORD "yakisiklican2909"
+#define FIREBASE_HOST "xxx"
+#define FIREBASE_AUTH "xxx"
+#define WIFI_SSID "xxx"
+#define WIFI_PASSWORD "xxx"
 #define MODULE_ID "00000000001"
 #define UNIQUE_ID "00000000001"
 #define UNIQUE_ID2 "00000000002"
